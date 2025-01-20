@@ -1,6 +1,10 @@
-# CVclass2024
-CV final project
+# CVclass2024  
+Final Project for Computer Vision
 
-### 
-conda create -n new python=3.9 
-I think you would like to install: pip install -r requirements.txt in your python 3.9 env to run download-dataset file
+### Setup Instructions
+
+1. **Create a Conda Environment**  
+   To get started, create a new conda environment with Python 3.9 by running:
+
+   ```bash
+   conda create -n new_env python=3.9
