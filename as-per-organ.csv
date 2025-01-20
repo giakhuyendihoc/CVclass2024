@@ -1,5 +1,4 @@
 organ,sex,as_count,uberon_id,url
-heart,Male,17,UBERON:0000948,https://purl.humanatlas.io/ref-organ/heart-male/v1.3
 blood vasculature,Female,125,UBERON:0004537,https://purl.humanatlas.io/ref-organ/blood-vasculature-female/v1.3
 blood vasculature,Male,123,UBERON:0004537,https://purl.humanatlas.io/ref-organ/blood-vasculature-male/v1.3
 body proper,Female,799,UBERON:0013702,https://purl.humanatlas.io/ref-organ/united-female/v1.7
