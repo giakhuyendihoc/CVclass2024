@@ -1,8 +1,6 @@
 organ,sex,as_count,uberon_id,url
 blood vasculature,Female,125,UBERON:0004537,https://purl.humanatlas.io/ref-organ/blood-vasculature-female/v1.3
 blood vasculature,Male,123,UBERON:0004537,https://purl.humanatlas.io/ref-organ/blood-vasculature-male/v1.3
-body proper,Female,799,UBERON:0013702,https://purl.humanatlas.io/ref-organ/united-female/v1.7
-body proper,Male,762,UBERON:0013702,https://purl.humanatlas.io/ref-organ/united-male/v1.7
 brain,Female,108,UBERON:0000955,https://purl.humanatlas.io/ref-organ/brain-female/v1.4
 brain,Male,108,UBERON:0000955,https://purl.humanatlas.io/ref-organ/brain-male/v1.4
 extrapulmonary bronchus,Female,5,UBERON:0002182,https://purl.humanatlas.io/ref-organ/main-bronchus-female/v1.1
