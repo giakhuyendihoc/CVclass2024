@@ -36,6 +36,7 @@ import uuid
 from typing import Tuple
 from mathutils import Vector, Matrix
 import numpy as np
+from typing import Any, Callable, Dict, Generator, List, Literal, Optional, Set, Tuple
 
 import bpy
 from mathutils import Vector
@@ -81,6 +82,40 @@ bpy.data.objects["Area"].location[2] = 0.5
 bpy.data.objects["Area"].scale[0] = 100
 bpy.data.objects["Area"].scale[1] = 100
 bpy.data.objects["Area"].scale[2] = 100
+
+def _create_light(
+    name: str,
+    light_type: Literal["POINT", "SUN", "SPOT", "AREA"],
+    location: Tuple[float, float, float],
+    rotation: Tuple[float, float, float],
+    energy: float,
+    use_shadow: bool = False,
+    specular_factor: float = 1.0,
+):
+    """Creates a light object.
+
+    Args:
+        name (str): Name of the light object.
+        light_type (Literal["POINT", "SUN", "SPOT", "AREA"]): Type of the light.
+        location (Tuple[float, float, float]): Location of the light.
+        rotation (Tuple[float, float, float]): Rotation of the light.
+        energy (float): Energy of the light.
+        use_shadow (bool, optional): Whether to use shadows. Defaults to False.
+        specular_factor (float, optional): Specular factor of the light. Defaults to 1.0.
+
+    Returns:
+        bpy.types.Object: The light object.
+    """
+
+    light_data = bpy.data.lights.new(name=name, type=light_type)
+    light_object = bpy.data.objects.new(name, light_data)
+    bpy.context.collection.objects.link(light_object)
+    light_object.location = location
+    light_object.rotation_euler = rotation
+    light_data.use_shadow = use_shadow
+    light_data.specular_factor = specular_factor
+    light_data.energy = energy
+    return light_object
 
 render.engine = args.engine
 render.image_settings.file_format = "PNG"
@@ -152,11 +187,71 @@ def set_camera_location(elevation, azimuth, distance):
     camera.rotation_euler = rot_quat.to_euler()
     return camera
 
-def randomize_lighting() -> None:
-    light2.energy = random.uniform(300, 600)
-    bpy.data.objects["Area"].location[0] = random.uniform(-1., 1.)
-    bpy.data.objects["Area"].location[1] = random.uniform(-1., 1.)
-    bpy.data.objects["Area"].location[2] = random.uniform(0.5, 1.5)
+# def randomize_lighting() -> None:
+#     light2.energy = random.uniform(300, 600)
+#     bpy.data.objects["Area"].location[0] = random.uniform(-1., 1.)
+#     bpy.data.objects["Area"].location[1] = random.uniform(-1., 1.)
+#     bpy.data.objects["Area"].location[2] = random.uniform(0.5, 1.5)
+
+#     bpy.data.objects["Area"].scale[0] = 100
+#     bpy.data.objects["Area"].scale[1] = 100
+#     bpy.data.objects["Area"].scale[2] = 100
+
+def randomize_lighting() -> Dict[str, bpy.types.Object]:
+    """Randomizes the lighting in the scene.
+
+    Returns:
+        Dict[str, bpy.types.Object]: Dictionary of the lights in the scene. The keys are
+            "key_light", "fill_light", "rim_light", and "bottom_light".
+    """
+
+    # Clear existing lights
+    bpy.ops.object.select_all(action="DESELECT")
+    bpy.ops.object.select_by_type(type="LIGHT")
+    bpy.ops.object.delete()
+
+    # Create key light
+    key_light = _create_light(
+        name="Key_Light",
+        light_type="SUN",
+        location=(0, 0, 0),
+        rotation=(0.785398, 0, -0.785398),
+        energy=random.choice([3, 4, 5]),
+    )
+
+    # Create fill light
+    fill_light = _create_light(
+        name="Fill_Light",
+        light_type="SUN",
+        location=(0, 0, 0),
+        rotation=(0.785398, 0, 2.35619),
+        energy=random.choice([2, 3, 4]),
+    )
+
+    # Create rim light
+    rim_light = _create_light(
+        name="Rim_Light",
+        light_type="SUN",
+        location=(0, 0, 0),
+        rotation=(-0.785398, 0, -3.92699),
+        energy=random.choice([3, 4, 5]),
+    )
+
+    # Create bottom light
+    bottom_light = _create_light(
+        name="Bottom_Light",
+        light_type="SUN",
+        location=(0, 0, 0),
+        rotation=(3.14159, 0, 0),
+        energy=random.choice([1, 2, 3]),
+    )
+
+    return dict(
+        key_light=key_light,
+        fill_light=fill_light,
+        rim_light=rim_light,
+        bottom_light=bottom_light,
+    )
 
 
 def reset_lighting() -> None:
@@ -164,6 +259,10 @@ def reset_lighting() -> None:
     bpy.data.objects["Area"].location[0] = 0
     bpy.data.objects["Area"].location[1] = 0
     bpy.data.objects["Area"].location[2] = 0.5
+
+    bpy.data.objects["Area"].scale[0] = 100
+    bpy.data.objects["Area"].scale[1] = 100
+    bpy.data.objects["Area"].scale[2] = 100
 
 
 def reset_scene() -> None:
@@ -253,61 +352,91 @@ def normalize_scene():
         obj.matrix_world.translation += offset
     bpy.ops.object.select_all(action="DESELECT")
 
+# def save_images(object_file: str) -> None:
+#     """Saves rendered images of the object in the scene."""
+#     try:
+#         # Normalize and create the main output directory
+#         output_dir = os.path.normpath(args.output_dir)
+#         os.makedirs(output_dir, exist_ok=True)
+
+#         reset_scene()
+
+#         # Load the object
+#         load_object(object_file)
+#         object_uid = os.path.basename(object_file).split(".")[0]
+
+#         # Create a subdirectory for the current object
+#         object_dir = os.path.join(output_dir, object_uid).replace("\\", "/")
+#         os.makedirs(object_dir, exist_ok=True)
+
+#         normalize_scene()
+
+#         # Create an empty object to track
+#         empty = bpy.data.objects.new("Empty", None)
+#         scene.collection.objects.link(empty)
+#         cam_constraint.target = empty
+
+#         randomize_lighting()
+
+#         # Set render engine and format
+#         bpy.context.scene.render.engine = args.engine
+#         bpy.context.scene.render.image_settings.file_format = 'PNG'
+
+#         for i in range(args.num_images):
+#             try:
+#                 # Set camera
+#                 camera = randomize_camera()
+
+#                 # Set render file path
+#                 render_path = os.path.join(object_dir, f"{i:03d}.png").replace("\\", "/")
+#                 scene.render.filepath = render_path
+
+#                 # Perform rendering
+#                 bpy.ops.render.render(write_still=True)
+
+#                 # Save camera RT matrix
+#                 RT = get_3x4_RT_matrix_from_blender(camera)
+#                 RT_path = os.path.join(object_dir, f"{i:03d}.npy").replace("\\", "/")
+#                 np.save(RT_path, RT)
+
+#                 print(f"Saved image: {render_path}")
+#                 print(f"Saved RT matrix: {RT_path}")
+#             except Exception as e:
+#                 print(f"Failed to save render or RT matrix for {object_file} (image {i}): {e}")
+
+#     except Exception as main_exception:
+#         print(f"Error during rendering for {object_file}: {main_exception}")
 def save_images(object_file: str) -> None:
     """Saves rendered images of the object in the scene."""
-    try:
-        # Normalize and create the main output directory
-        output_dir = os.path.normpath(args.output_dir)
-        os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(args.output_dir, exist_ok=True)
 
-        reset_scene()
+    reset_scene()
 
-        # Load the object
-        load_object(object_file)
-        object_uid = os.path.basename(object_file).split(".")[0]
+    # load the object
+    load_object(object_file)
+    object_uid = os.path.basename(object_file).split(".")[0]
+    normalize_scene()
 
-        # Create a subdirectory for the current object
-        object_dir = os.path.join(output_dir, object_uid).replace("\\", "/")
-        os.makedirs(object_dir, exist_ok=True)
+    # create an empty object to track
+    empty = bpy.data.objects.new("Empty", None)
+    scene.collection.objects.link(empty)
+    cam_constraint.target = empty
 
-        normalize_scene()
+    randomize_lighting()
+    for i in range(args.num_images):
+        print(light2.energy)
+        # set camera
+        camera = randomize_camera()
 
-        # Create an empty object to track
-        empty = bpy.data.objects.new("Empty", None)
-        scene.collection.objects.link(empty)
-        cam_constraint.target = empty
+        # render the image
+        render_path = os.path.join(args.output_dir, object_uid, f"{i:03d}.png")
+        scene.render.filepath = render_path
+        bpy.ops.render.render(write_still=True)
 
-        randomize_lighting()
-
-        # Set render engine and format
-        bpy.context.scene.render.engine = args.engine
-        bpy.context.scene.render.image_settings.file_format = 'PNG'
-
-        for i in range(args.num_images):
-            try:
-                # Set camera
-                camera = randomize_camera()
-
-                # Set render file path
-                render_path = os.path.join(object_dir, f"{i:03d}.png").replace("\\", "/")
-                scene.render.filepath = render_path
-
-                # Perform rendering
-                bpy.ops.render.render(write_still=True)
-
-                # Save camera RT matrix
-                RT = get_3x4_RT_matrix_from_blender(camera)
-                RT_path = os.path.join(object_dir, f"{i:03d}.npy").replace("\\", "/")
-                np.save(RT_path, RT)
-
-                print(f"Saved image: {render_path}")
-                print(f"Saved RT matrix: {RT_path}")
-            except Exception as e:
-                print(f"Failed to save render or RT matrix for {object_file} (image {i}): {e}")
-
-    except Exception as main_exception:
-        print(f"Error during rendering for {object_file}: {main_exception}")
-
+        # save camera RT matrix
+        RT = get_3x4_RT_matrix_from_blender(camera)
+        RT_path = os.path.join(args.output_dir, object_uid, f"{i:03d}.npy")
+        np.save(RT_path, RT)
 
 def download_object(object_url: str) -> str:
     """Download the object and return the path."""
